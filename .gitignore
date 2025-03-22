@@ -1,0 +1,25 @@
+# Virtual environment
+venv/
+
+# Audio and media files
+*.m4a
+*.mp3
+*.wav
+
+# Mac system file
+.DS_Store
+
+# Large model binaries
+onnxruntime_pybind11_state.so
+*.onnx
+*.pt
+*.bin
+
+# Python cache files
+__pycache__/
+*.pyc
+
+
+# IDE/editor settings (optional)
+.vscode/
+.idea/
