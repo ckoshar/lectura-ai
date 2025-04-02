@@ -1,31 +1,59 @@
 import os
-from faster_whisper import WhisperModel
-from pydub import AudioSegment
+import subprocess
+import shutil
+import tempfile
+import whisper
 
-# Manually set FFmpeg path (replace with actual path from 'which ffmpeg')
-AudioSegment.converter = "/opt/homebrew/bin/ffmpeg"
-AudioSegment.ffprobe = "/opt/homebrew/bin/ffprobe"
+def check_ffmpeg():
+    if shutil.which("ffmpeg") is None:
+        raise EnvironmentError("ffmpeg is not installed or not found in system PATH.")
 
-def convert_m4a_to_wav(audio_path):
-    """Converts an M4A file to WAV format."""
-    wav_path = audio_path.replace(".m4a", ".wav")
-    audio = AudioSegment.from_file(audio_path, format="m4a")
-    audio.export(wav_path, format="wav")
-    return wav_path
+def get_notes_folder():
+    notes_folder = os.path.join(os.path.expanduser("~"), "Lectura", "notes")
+    os.makedirs(notes_folder, exist_ok=True)
+    return notes_folder
 
-def transcribe_audio(audio_path):
-    """Transcribes audio using Faster Whisper."""
-    if audio_path.endswith(".m4a"):
-        print("Converting .m4a to .wav...")
-        audio_path = convert_m4a_to_wav(audio_path)
+def convert_to_wav(input_path):
+    check_ffmpeg()
+    temp_wav = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+    temp_wav.close()
 
-    model = WhisperModel("base")
-    segments, info = model.transcribe(audio_path)
+    command = [
+        "ffmpeg",
+        "-i", input_path,
+        "-ar", "16000",  # Sample rate required by whisper
+        "-ac", "1",      # Mono channel
+        temp_wav.name,
+        "-y"             # Overwrite output if exists
+    ]
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+    return temp_wav.name
 
-    transcription_text = " ".join(segment.text for segment in segments)
-    return transcription_text
+def transcribe(file_path):
+    check_ffmpeg()
 
-# Example usage
-audio_file = "Acc_class.m4a"
-transcription = transcribe_audio(audio_file)
-print("Transcription:\n", transcription)
+    # Get clean filename for saving transcript
+    filename_base = os.path.splitext(os.path.basename(file_path))[0]
+    transcript_path = os.path.join(get_notes_folder(), f"{filename_base}.txt")
+
+    # Convert if necessary
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext not in [".mp3", ".wav"]:
+        file_path = convert_to_wav(file_path)
+        cleanup_temp = True
+    else:
+        cleanup_temp = False
+
+    # Load and run Whisper
+    model = whisper.load_model("base")
+    result = model.transcribe(file_path, fp16=False)
+
+    # Write transcript
+    with open(transcript_path, "w", encoding="utf-8") as f:
+        f.write(result["text"])
+
+    # Clean up temp file if created
+    if cleanup_temp and os.path.exists(file_path):
+        os.remove(file_path)
+
+    return transcript_path
