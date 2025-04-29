@@ -1,14 +1,20 @@
 import streamlit as st
 import os
 import tempfile
+import time
+import datetime
+from pathlib import Path
+
+# Import Lectura modules
 from transcribe import transcribe
 from summary import generate_summary
 from deepgram_transcribe import transcribe as deepgram_transcribe
-import time
+from search_notes import search_transcripts
+from mac_recorder import start_recording, check_sox_installation
 
 # Page configuration
 st.set_page_config(
-    page_title="Lectura - AI-Powered Lecture Notes",
+    page_title="Lectura Demo",
     page_icon="🎧",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -42,6 +48,13 @@ st.markdown("""
         border-radius: 0.5rem;
         margin-bottom: 1rem;
     }
+    .feature-card {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
     .stButton>button {
         width: 100%;
         background-color: #4B8BBE;
@@ -59,18 +72,19 @@ st.markdown("""
 # Sidebar
 with st.sidebar:
     st.image("https://via.placeholder.com/150x150.png?text=Lectura", width=150)
-    st.markdown("## 🎧 Lectura")
+    st.markdown("## 🎧 Lectura Demo")
     st.markdown("AI-Powered Lecture Notes")
     st.markdown("---")
     
     st.markdown("### 📝 About")
     st.markdown("""
-    Lectura helps students turn lecture recordings into smart, structured notes with:
-    - 🎙️ Audio transcription
+    This demo showcases all features of Lectura:
+    - 🎙️ Audio recording
+    - 📝 Transcription
     - 👥 Speaker identification
-    - 📚 Topic summaries
+    - 📚 Summaries
     - 💡 Study tips
-    - 🔍 Searchable notes
+    - 🔍 Search
     """)
     
     st.markdown("---")
@@ -89,13 +103,69 @@ with st.sidebar:
     st.markdown("[Documentation](https://github.com/ckoshar/Lectura/wiki)")
 
 # Main content
-st.markdown('<h1 class="main-header">🎧 Lectura – AI-Powered Lecture Notes</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">🎧 Lectura Demo</h1>', unsafe_allow_html=True)
+
+# Introduction
+st.markdown("""
+<div class="info-box">
+    <h3>Welcome to the Lectura Demo!</h3>
+    <p>This demo showcases all the features of Lectura, an AI-powered lecture notes application.</p>
+    <p>Use the tabs below to explore different features:</p>
+</div>
+""", unsafe_allow_html=True)
 
 # Tabs for different features
-tab1, tab2, tab3 = st.tabs(["📝 Transcribe", "🔍 Search Notes", "⚙️ Settings"])
+tab1, tab2, tab3, tab4 = st.tabs(["🎙️ Record", "📝 Transcribe", "🔍 Search", "⚙️ Settings"])
 
+# Record Tab
 with tab1:
-    st.markdown('<h2 class="sub-header">Upload Your Lecture Recording</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header">Record a Lecture</h2>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="feature-card">
+        <h3>🎙️ Record Audio</h3>
+        <p>Record audio directly from your microphone.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Check if sox is installed
+    if not check_sox_installation():
+        st.error("Sox is not installed. Please install it with: `brew install sox`")
+    else:
+        if st.button("Start Recording"):
+            with st.spinner("Recording in progress... Press Ctrl+C in the terminal to stop."):
+                # This would normally open a terminal window for recording
+                # For demo purposes, we'll simulate recording
+                st.info("In a real implementation, this would open a terminal window for recording.")
+                st.info("For now, we'll simulate recording for 5 seconds.")
+                
+                # Simulate recording
+                progress_bar = st.progress(0)
+                for i in range(100):
+                    time.sleep(0.05)
+                    progress_bar.progress(i + 1)
+                
+                st.success("Recording complete!")
+                
+                # Simulate a recorded file
+                demo_file = "demo_recording.m4a"
+                st.download_button(
+                    label="Download Demo Recording",
+                    data=b"Demo audio data",
+                    file_name=demo_file,
+                    mime="audio/m4a"
+                )
+
+# Transcribe Tab
+with tab2:
+    st.markdown('<h2 class="sub-header">Transcribe Audio</h2>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="feature-card">
+        <h3>📝 Transcribe Audio</h3>
+        <p>Upload an audio file to transcribe it.</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # File uploader
     uploaded_file = st.file_uploader(
@@ -117,8 +187,8 @@ with tab1:
         st.markdown('</div>', unsafe_allow_html=True)
         
         # Process button
-        if st.button("Process Recording"):
-            with st.spinner("Processing your file... ⏳"):
+        if st.button("Transcribe"):
+            with st.spinner("Transcribing your file... ⏳"):
                 # Save to temporary file
                 with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as temp_file:
                     temp_file.write(uploaded_file.read())
@@ -140,7 +210,7 @@ with tab1:
                 # Generate summary
                 summary = generate_summary(transcript)
                 
-                st.markdown('<div class="success-box">✅ Processing complete!</div>', unsafe_allow_html=True)
+                st.markdown('<div class="success-box">✅ Transcription complete!</div>', unsafe_allow_html=True)
             
             # Display results in columns
             col1, col2 = st.columns(2)
@@ -169,16 +239,21 @@ with tab1:
                     mime="text/plain"
                 )
 
-with tab2:
+# Search Tab
+with tab3:
     st.markdown('<h2 class="sub-header">Search Your Notes</h2>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="feature-card">
+        <h3>🔍 Search Notes</h3>
+        <p>Search through your saved transcripts.</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Search input
     search_query = st.text_input("Enter search terms")
     
     if search_query:
-        # Import search function
-        from search_notes import search_transcripts
-        
         # Perform search
         results = search_transcripts(search_query)
         
@@ -192,8 +267,16 @@ with tab2:
         else:
             st.info("No matches found. Try different search terms.")
 
-with tab3:
+# Settings Tab
+with tab4:
     st.markdown('<h2 class="sub-header">Application Settings</h2>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="feature-card">
+        <h3>⚙️ Settings</h3>
+        <p>Configure application settings.</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # API Keys
     st.markdown("### API Keys")
@@ -218,3 +301,12 @@ with tab3:
     if st.button("Save Settings"):
         # In a real app, you'd save these settings to a config file
         st.success("Settings saved successfully!")
+
+# Footer
+st.markdown("---")
+st.markdown("""
+<div style="text-align: center; color: #666;">
+    <p>Lectura Demo | Created with ❤️ by Carter Koshar</p>
+    <p>Version 1.0.0</p>
+</div>
+""", unsafe_allow_html=True) 

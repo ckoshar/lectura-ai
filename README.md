@@ -1,74 +1,126 @@
-# Lectura 🧠🎧
+# Lectura - AI-Powered Lecture Notes
 
-Lectura is an AI-powered study tool that helps students turn lecture recordings into smart, structured notes — complete with transcriptions, speaker labeling, topic summaries, and study tips.
+Lectura is an AI-powered application that helps you capture, transcribe, and summarize lecture content. It uses state-of-the-art AI models to generate accurate transcripts and insightful summaries of your lectures.
 
----
+## Features
 
-##  Features
+- **Audio Recording**: Record lectures directly from your microphone
+- **Transcription**: Convert audio to text using OpenAI's Whisper or Deepgram
+- **Summarization**: Generate concise summaries using Claude Sonnet 3.7
+- **Cross-Platform**: Works on macOS, Windows, and Linux
 
--  Audio Transcription  
-  Convert `.m4a` or `.wav` lecture recordings into clean, readable text.
+## Installation
 
--  Speaker Identification  
-  Automatically detect and label different speakers in the lecture.
+### Prerequisites
 
--  Topic Summary  
-  Paragraph-style summary of key topics covered in the lecture.
+- Python 3.9 or higher
+- FFmpeg (for audio processing)
+- Sox (for macOS recording) or ALSA (for Linux) or PyAudio (for Windows)
 
--  Study Tips  
-  Extracts potential test topics, assignments, and common mistakes.
+### Setup
 
--  Searchable Notes  
-  Search across your saved transcripts for specific terms or questions.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/lectura.git
+   cd lectura
+   ```
 
----
-
-##  Project StWhere transcripts and summaries are saved
-├── transcribe.py         # Records audio, transcribes, identifies speakers
-├── summary.py            # Analyzes transcript and adds study tips & summary
-├── search_notes.py       # Tool to search across all saved transcripts
-├── venv/                 # Python virtual environment (not tracked by Git)
-
----
-
-##  How to Use
-
-1. Clone the repo:
-   git clone https://github.com/ckoshar/Lectura.git
-   cd Lectura
-
-2. Set up the environment:
-   python3 -m venv venv
-   source venv/bin/activate
+2. Install dependencies:
+   ```bash
    pip install -r requirements.txt
+   ```
 
-3. Place your audio file (e.g. lecture1.m4a) in the root folder.
-e
-4. Set up Hugging Face token with
-  export HUGGINGFACE_TOKEN=hf_your_token_here
+3. Set up API keys:
+   Create a `.env` file in the project root with:
+   ```
+   ANTHROPIC_API_KEY=your_anthropic_api_key
+   DEEPGRAM_API_KEY=your_deepgram_api_key
+   ```
 
-5. Run the transcription:
-   python transcribe.py
+### Platform-Specific Setup
 
-6. Run the analysis + summary:
-   python summary.py
+#### macOS
+```bash
+brew install ffmpeg sox
+```
 
----
+#### Windows
+```bash
+# Install FFmpeg from https://ffmpeg.org/download.html
+# PyAudio will be installed via pip
+```
 
-## NOTE To use speaker identification, create a free Hugging Face token and paste it in step 4
+#### Linux
+```bash
+sudo apt-get install ffmpeg alsa-utils
+```
 
-## Target Audience
+## Usage
 
-Lectura is designed for:
-- University and high school students
-- Students with learning differences (ADHD, dyslexia, etc.)
-- Tutors, peer mentors, and educators
+Lectura can be used in two ways:
 
----
+### Command Line Interface
 
-## Future Roadmap
+```bash
+# Record audio
+python app.py --record
 
-- Voice-powered Q&A quiz mode
-- Web-based interface (GUI)
-- Flashcard generator
-- AI-powered search assistant
+# Transcribe audio file
+python app.py --transcribe path/to/audio.mp3
+
+# Summarize transcript
+python app.py --summarize path/to/transcript.txt
+
+# Transcribe using Deepgram
+python app.py --deepgram path/to/audio.mp3
+```
+
+### Web Interface
+
+```bash
+streamlit run streamlit_app.py
+```
+
+## How It Works
+
+1. **Recording**: Capture audio from your microphone
+2. **Transcription**: Convert audio to text using AI
+3. **Summarization**: Generate a concise summary with key points
+4. **Storage**: Save everything in an organized folder structure
+
+## Project Structure
+
+- `app.py`: Main entry point with CLI
+- `streamlit_app.py`: Web interface
+- `transcribe.py`: Whisper transcription
+- `deepgram_transcribe.py`: Deepgram transcription
+- `summary.py`: Claude summarization
+- `mac_recorder.py`: macOS audio recording
+- `windows_recorder.py`: Windows audio recording
+- `linux_recorder.py`: Linux audio recording
+- `platform_detector.py`: Platform detection
+- `error_handler.py`: Error handling and logging
+
+## Cross-Platform Support
+
+Lectura is designed to work across multiple platforms:
+
+- **macOS**: Uses Sox for audio recording
+- **Windows**: Uses PyAudio for audio recording
+- **Linux**: Uses ALSA for audio recording
+
+The application automatically detects your platform and uses the appropriate recording method.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- OpenAI Whisper for transcription
+- Anthropic Claude for summarization
+- Deepgram for alternative transcription
