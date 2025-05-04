@@ -1,30 +1,38 @@
 import os
 import sys
 import argparse
-from error_handler import handle_error, logger
-from platform_detector import import_recorder
+import logging
+from pathlib import Path
+
+# Add src directory to Python path
+sys.path.append(str(Path(__file__).parent))
+
+from utils.logging_config import setup_logging
+from utils.error_handler import handle_error
+from transcribe import transcribe
+from api.deepgram_transcribe import transcribe as deepgram_transcribe
+from summary import append_summary_to_file
+
+# Initialize logging
+logger = setup_logging()
 
 def main():
     """
     Main entry point for the Lectura application.
     """
     parser = argparse.ArgumentParser(description="Lectura - AI-powered lecture notes")
-    parser.add_argument("--record", action="store_true", help="Record audio from microphone")
-    parser.add_argument("--transcribe", metavar="FILE", help="Transcribe an audio file")
-    parser.add_argument("--summarize", metavar="FILE", help="Summarize a transcript file")
-    parser.add_argument("--deepgram", metavar="FILE", help="Transcribe using Deepgram API")
+    parser.add_argument("--record", action="store_true", help="Start recording audio")
+    parser.add_argument("--transcribe", type=str, help="Transcribe an audio file")
+    parser.add_argument("--summarize", type=str, help="Summarize a transcript file")
+    parser.add_argument("--deepgram", type=str, help="Transcribe using Deepgram")
     
     args = parser.parse_args()
     
     try:
-        # If no arguments provided, show help
-        if len(sys.argv) == 1:
-            parser.print_help()
-            return
-        
         # Record audio
         if args.record:
             logger.info("Starting recording mode")
+            from recorder.platform_detector import import_recorder
             recorder = import_recorder()
             recording_path = recorder.start_recording()
             
@@ -37,7 +45,6 @@ def main():
         # Transcribe audio
         elif args.transcribe:
             logger.info(f"Starting transcription of {args.transcribe}")
-            from transcribe import transcribe
             transcript_path = transcribe(args.transcribe)
             
             if transcript_path:
@@ -49,7 +56,6 @@ def main():
         # Summarize transcript
         elif args.summarize:
             logger.info(f"Starting summarization of {args.summarize}")
-            from summary import append_summary_to_file
             append_summary_to_file(args.summarize)
             
             print(f"\n🎉 Summarization complete!")
@@ -58,15 +64,17 @@ def main():
         # Transcribe with Deepgram
         elif args.deepgram:
             logger.info(f"Starting Deepgram transcription of {args.deepgram}")
-            from deepgram_transcribe import transcribe
-            transcript_path = transcribe(args.deepgram)
+            transcript_path = deepgram_transcribe(args.deepgram)
             
             if transcript_path:
                 print(f"\n🎉 Deepgram transcription complete!")
                 print(f"📝 Transcript saved to: {transcript_path}")
                 print("\nTo summarize this transcript, run:")
                 print(f"python app.py --summarize {transcript_path}")
-    
+        
+        else:
+            parser.print_help()
+            
     except Exception as e:
         error_message = handle_error(e, "app.py")
         print(f"Error: {error_message}")

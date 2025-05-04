@@ -3,23 +3,25 @@ import subprocess
 import shutil
 import tempfile
 import whisper
-from error_handler import (
+from pathlib import Path
+from utils.error_handler import (
     TranscriptionError, 
     FileError, 
     handle_error, 
     logger
 )
+from config import TRANSCRIPTS_DIR
 
 def check_ffmpeg():
     """Check if ffmpeg is installed."""
     if shutil.which("ffmpeg") is None:
         raise TranscriptionError("ffmpeg is not installed or not found in system PATH.")
 
-def get_notes_folder():
-    """Get the folder where transcripts are saved."""
-    notes_folder = os.path.join(os.path.expanduser("~"), "Lectura", "notes")
-    os.makedirs(notes_folder, exist_ok=True)
-    return notes_folder
+def get_data_dir():
+    """Get the data directory where transcripts are saved."""
+    data_dir = Path(__file__).parent.parent / "data"
+    data_dir.mkdir(exist_ok=True)
+    return data_dir
 
 def convert_to_wav(input_path):
     """
@@ -71,7 +73,7 @@ def transcribe(file_path):
 
         # Get clean filename for saving transcript
         filename_base = os.path.splitext(os.path.basename(file_path))[0]
-        transcript_path = os.path.join(get_notes_folder(), f"{filename_base}.txt")
+        transcript_path = TRANSCRIPTS_DIR / f"{filename_base}.txt"
 
         # Convert if necessary
         ext = os.path.splitext(file_path)[1].lower()
@@ -99,7 +101,7 @@ def transcribe(file_path):
             os.remove(file_path)
 
         logger.info("Transcription completed successfully")
-        return transcript_path
+        return str(transcript_path)
     except TranscriptionError as e:
         # Re-raise custom exceptions
         raise

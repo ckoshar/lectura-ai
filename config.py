@@ -7,6 +7,34 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Project root directory
+PROJECT_ROOT = Path(__file__).parent
+
+# Data directories
+DATA_DIR = PROJECT_ROOT / "data"
+RECORDINGS_DIR = DATA_DIR / "recordings"
+TRANSCRIPTS_DIR = DATA_DIR / "transcripts"
+SUMMARIES_DIR = DATA_DIR / "summaries"
+LOGS_DIR = DATA_DIR / "logs"
+
+# Create directories if they don't exist
+for directory in [DATA_DIR, RECORDINGS_DIR, TRANSCRIPTS_DIR, SUMMARIES_DIR, LOGS_DIR]:
+    directory.mkdir(parents=True, exist_ok=True)
+
+# API Keys
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
+
+# Model configurations
+WHISPER_MODEL = "base"  # Options: "tiny", "base", "small", "medium", "large"
+T5_MODEL = "t5-small"  # Options: "t5-small", "t5-base", "t5-large"
+
+# Recording settings
+SAMPLE_RATE = 16000
+CHANNELS = 1
+CHUNK_SIZE = 1024
+RECORD_SECONDS = 300  # Default recording duration in seconds
+
 @dataclass
 class APIConfig:
     anthropic_api_key: str

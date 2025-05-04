@@ -1,21 +1,28 @@
 import os
 import asyncio
-from deepgram import Deepgram
-from transcribe import get_notes_folder
-from error_handler import (
+from pathlib import Path
+from deepgram import DeepgramClient, PrerecordedOptions
+from utils.error_handler import (
     TranscriptionError, 
     APIError, 
     FileError, 
     handle_error, 
     logger
 )
+from config import TRANSCRIPTS_DIR
 
 # Initialize Deepgram client
 try:
-    dg_client = Deepgram(os.environ.get("DEEPGRAM_API_KEY"))
+    dg_client = DeepgramClient(os.environ.get("DEEPGRAM_API_KEY"))
 except Exception as e:
     logger.error(f"Failed to initialize Deepgram client: {str(e)}")
     dg_client = None
+
+def get_data_dir():
+    """Get the data directory where transcripts are saved."""
+    data_dir = Path(__file__).parent.parent.parent / "data"
+    data_dir.mkdir(exist_ok=True)
+    return data_dir
 
 async def transcribe_with_deepgram(file_path):
     """
@@ -38,31 +45,28 @@ async def transcribe_with_deepgram(file_path):
     try:
         # Get clean filename for saving transcript
         filename_base = os.path.splitext(os.path.basename(file_path))[0]
-        transcript_path = os.path.join(get_notes_folder(), f"{filename_base}_deepgram.txt")
+        transcript_path = TRANSCRIPTS_DIR / f"{filename_base}_deepgram.txt"
         
         logger.info(f"Opening audio file: {file_path}")
         # Open the audio file
         with open(file_path, 'rb') as audio:
-            source = {'buffer': audio, 'mimetype': 'audio/wav'}
-            
             # Set transcription options
-            options = {
-                'smart_format': True,
-                'model': 'nova-2',
-                'language': 'en-US',
-                'punctuate': True,
-                'diarize': True,  # Speaker identification
-                'utterances': True,
-                'profanity_filter': False,
-            }
+            options = PrerecordedOptions(
+                smart_format=True,
+                model="nova-2",
+                language="en-US",
+                punctuate=True,
+                diarize=True,  # Speaker identification
+                utterances=True,
+            )
             
             logger.info("Sending request to Deepgram")
             # Send request to Deepgram
-            response = await dg_client.transcription.prerecorded(source, options)
+            response = await dg_client.listen.prerecorded.v("1").transcribe_file(audio, options)
             
             logger.info("Extracting transcript from response")
             # Extract transcript
-            transcript = response['results']['channels'][0]['alternatives'][0]['transcript']
+            transcript = response.results.channels[0].alternatives[0].transcript
             
             logger.info(f"Writing transcript to {transcript_path}")
             # Write transcript to file
@@ -70,7 +74,7 @@ async def transcribe_with_deepgram(file_path):
                 f.write(transcript)
                 
             logger.info("Transcription completed successfully")
-            return transcript_path
+            return str(transcript_path)
     except Exception as e:
         logger.error(f"Deepgram transcription failed: {str(e)}")
         raise TranscriptionError(f"Deepgram transcription failed: {str(e)}")

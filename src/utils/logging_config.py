@@ -2,12 +2,11 @@ import logging
 import sys
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
-from config import config
 
 def setup_logging():
     """Configure logging for the application."""
     # Create logs directory
-    log_dir = Path.home() / ".lectura" / "logs"
+    log_dir = Path(__file__).parent.parent.parent / "data" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     
     # Create formatters

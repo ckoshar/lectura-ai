@@ -1,60 +1,63 @@
 import os
-import sys
-import traceback
 import logging
-from datetime import datetime
+import traceback
+from pathlib import Path
 
-# Configure logging
-def setup_logging(log_dir=None):
-    """
-    Set up logging configuration.
-    
-    Args:
-        log_dir: Directory to store log files (default: ~/Lectura/logs)
-    """
-    if log_dir is None:
-        home = os.path.expanduser("~")
-        log_dir = os.path.join(home, "Lectura", "logs")
-    
-    os.makedirs(log_dir, exist_ok=True)
-    
-    # Create a log file with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_file = os.path.join(log_dir, f"lectura_{timestamp}.log")
-    
-    # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
-    
-    return logging.getLogger("Lectura")
+def get_log_dir():
+    """Get the directory for log files."""
+    log_dir = Path(__file__).parent.parent.parent / "data" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir
 
-# Initialize logger
-logger = setup_logging()
+def setup_logger():
+    """Set up the logger for the application."""
+    # Create logs directory
+    log_dir = get_log_dir()
+    
+    # Create logger
+    logger = logging.getLogger("Lectura")
+    logger.setLevel(logging.DEBUG)
+    
+    # Create file handler
+    log_file = log_dir / "lectura.log"
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.DEBUG)
+    
+    # Create console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    
+    # Create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    
+    # Add handlers to logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    
+    return logger
+
+logger = setup_logger()
 
 class LecturaError(Exception):
     """Base exception class for Lectura."""
     pass
 
 class TranscriptionError(LecturaError):
-    """Exception raised for errors during transcription."""
+    """Exception raised for transcription errors."""
     pass
 
 class SummarizationError(LecturaError):
-    """Exception raised for errors during summarization."""
+    """Exception raised for summarization errors."""
     pass
 
 class RecordingError(LecturaError):
-    """Exception raised for errors during audio recording."""
+    """Exception raised for recording errors."""
     pass
 
 class APIError(LecturaError):
-    """Exception raised for API-related errors."""
+    """Exception raised for API errors."""
     pass
 
 class FileError(LecturaError):
